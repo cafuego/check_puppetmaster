@@ -1,0 +1,96 @@
+#!/bin/bash
+#
+# Nagios checking script that whines if a node hasn't checked in with the
+# master for a day or more and sets a critical status if the node hasn't
+# checked in for a week or longer. You can of course tweak those thresholds
+# if you want.
+
+# Spot of configuration. Basically just specify where the yaml files live.
+YAMLPATH=/var/lib/puppet/yaml/node
+STATUS_OK=0
+STATUS_WARN=1
+STATUS_CRITICAL=2
+STATUS_UNKNOWN=3
+INTERVAL_WARNING=$((60 * 60 * 2))
+INTERVAL_CRITICAL=$((60 * 60 * 24))
+
+# A space separated list of hostanmes to ignore. Tthese might for instance be
+# laptops that just don't get used every day and thus don't sync.
+IGNORE_HOSTS=""
+
+# Early exit if no read access to the yaml files.
+if [ ! -r ${YAMLPATH} ]; then
+  echo "UNKNOWN: Cannot access ${YAMLPATH}"
+  exit ${STATUS_UNKNOWN}
+fi
+
+# Bunch of internal vars used for status info output.
+status="WARNING"
+ret=${STATUS_WARN}
+i_count=0
+o_count=0
+w_count=0
+w_string=""
+e_count=0
+e_string=""
+
+# Current time.
+NOW=$(date +"%s")
+
+# The meat.
+
+# Get all hostnames associated with active certificates, and check the time
+# each of these last checked in with the server. Do this by converting the
+# yaml file expiration datestamp to epoch format and subtracting it from now.
+for node in $(/usr/sbin/puppetca -la | awk '/^\+/ {print $2}'); do
+
+  # Check if we can skip this host.
+  if [ -n "${IGNORE_HOSTS}" ]; then
+    if [[ ${IGNORE_HOSTS} =~ ${node} ]]; then
+      i_count=$((${i_count} + 1))
+      continue
+    fi
+  fi
+
+  EXPIRATION=$(grep expiration ${YAMLPATH}/$node.yaml | awk '{printf("%s %s", $2, $3);}')
+  typeset -i CHECKIN=$(date +"%s" -d "${EXPIRATION}")
+  DIFFERENCE=$((${NOW} - ${CHECKIN}))
+
+  # Count hosts and generate some output strings based on the status.
+  if [ ${DIFFERENCE} -lt ${INTERVAL_WARNING} ]; then
+    o_count=$((${o_count} + 1));
+  else
+    if [ ${DIFFERENCE} -gt ${INTERVAL_CRITICAL} ]; then
+      e_count=$((${e_count} + 1))
+      e_string="${e_string} ${node}"
+    else
+      w_count=$((${w_count} + 1))
+      w_string="${w_string} ${node}"
+    fi
+  fi
+done
+
+# Generate a status string for user display.
+if [ -n "${e_string}" ]; then
+  s_string="${s_string} ${e_count} critical (${e_string## });"
+fi
+if [ -n "${w_string}" ]; then
+  s_string="${s_string} ${w_count} warning (${w_string## });"
+fi
+if [ ${i_count} -gt 0 ]; then
+  s_string="${s_string} ${i_count} ignored;"
+fi
+s_string="${s_string} ${o_count} ok."
+
+# Create a return value and status string.
+if [ ${e_count} -gt 0 ]; then
+  status="CRITICAL"
+  ret=${STATUS_CRITICAL}
+elif [ ${w_count} -gt 0 ]; then
+  status="WARNING"
+  ret=${STATUS_WARNING}
+fi
+
+# Output the status and inform the suer about which hosts are lagging.
+echo -n "${status}:${s_string}"
+exit $ret
