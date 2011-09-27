@@ -25,7 +25,7 @@ if [ ! -r ${YAMLPATH} ]; then
 fi
 
 # Bunch of internal vars used for status info output.
-status="WARNING"
+status="OK"
 ret=${STATUS_WARN}
 i_count=0
 o_count=0
