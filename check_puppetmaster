@@ -26,7 +26,7 @@ fi
 
 # Bunch of internal vars used for status info output.
 status="OK"
-ret=${STATUS_WARN}
+ret=${STATUS_OK}
 i_count=0
 o_count=0
 w_count=0
