@@ -14,7 +14,7 @@ STATUS_UNKNOWN=3
 INTERVAL_WARNING=$((60 * 60 * 2))
 INTERVAL_CRITICAL=$((60 * 60 * 24))
 
-# A space separated list of hostanmes to ignore. Tthese might for instance be
+# A space separated list of hostnames to ignore. These might for instance be
 # laptops that just don't get used every day and thus don't sync.
 IGNORE_HOSTS=""
 
@@ -91,6 +91,6 @@ elif [ ${w_count} -gt 0 ]; then
   ret=${STATUS_WARNING}
 fi
 
-# Output the status and inform the suer about which hosts are lagging.
+# Output the status and inform the user about which hosts are lagging.
 echo -n "${status}:${s_string}"
 exit $ret
