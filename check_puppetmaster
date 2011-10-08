@@ -8,7 +8,7 @@
 # Spot of configuration. Basically just specify where the yaml files live.
 YAMLPATH=/var/lib/puppet/yaml/node
 STATUS_OK=0
-STATUS_WARN=1
+STATUS_WARNING=1
 STATUS_CRITICAL=2
 STATUS_UNKNOWN=3
 INTERVAL_WARNING=$((60 * 60 * 2))
@@ -44,14 +44,6 @@ NOW=$(date +"%s")
 # yaml file expiration datestamp to epoch format and subtracting it from now.
 for node in $(/usr/sbin/puppetca -la | awk '/^\+/ {print $2}'); do
 
-  # Check if we can skip this host.
-  if [ -n "${IGNORE_HOSTS}" ]; then
-    if [[ ${IGNORE_HOSTS} =~ ${node} ]]; then
-      i_count=$((${i_count} + 1))
-      continue
-    fi
-  fi
-
   EXPIRATION=$(grep expiration ${YAMLPATH}/$node.yaml | awk '{printf("%s %s", $2, $3);}')
   typeset -i CHECKIN=$(date +"%s" -d "${EXPIRATION}")
   DIFFERENCE=$((${NOW} - ${CHECKIN}))
@@ -60,6 +52,13 @@ for node in $(/usr/sbin/puppetca -la | awk '/^\+/ {print $2}'); do
   if [ ${DIFFERENCE} -lt ${INTERVAL_WARNING} ]; then
     o_count=$((${o_count} + 1));
   else
+    # If there is an issue, first check if we can ignore this host.
+    if [ -n "${IGNORE_HOSTS}" ]; then
+       if [[ ${IGNORE_HOSTS} =~ ${node} ]]; then
+         i_count=$((${i_count} + 1))
+         continue
+       fi
+    fi
     if [ ${DIFFERENCE} -gt ${INTERVAL_CRITICAL} ]; then
       e_count=$((${e_count} + 1))
       e_string="${e_string} ${node}"
