@@ -18,6 +18,11 @@ INTERVAL_CRITICAL=$((60 * 60 * 24))
 # laptops that just don't get used every day and thus don't sync.
 IGNORE_HOSTS=""
 
+# Override settings from a config file if one exists.
+if [ -f /etc/default/check_puppetmaster ]; then
+  . /etc/default/check_puppetmaster
+fi
+
 # Early exit if no read access to the yaml files.
 if [ ! -r ${YAMLPATH} ]; then
   echo "UNKNOWN: Cannot access ${YAMLPATH}"
