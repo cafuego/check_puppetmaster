@@ -1,6 +1,5 @@
-# Default settings for check_puppetmaster. Overide them here so
-# that you may replace the script itself without needing to edit
-# it again. Lazy++.
+# Default settings for check_puppetmaster. Overide them here so that you
+# may replace the script itself without needing to edit it again. Lazy++
 
 # Where do the puppet yaml files live?
 YAMLPATH=/var/lib/puppet/yaml/node
@@ -13,3 +12,8 @@ INTERVAL_CRITICAL=$((60 * 60 * 24))
 
 # Which hosts can we ignore if they don't sync?
 IGNORE_HOSTS="my.laptop.local my.tablet.local"
+
+# Set parameters to puppetca. If you need more, add them here. For example
+# you might need to set add "-la --ssldir /var/lib/puppet/ssl" if the
+# `puppetca -la' command provides no output on your puppetmaster.
+PARAMS="-la"
