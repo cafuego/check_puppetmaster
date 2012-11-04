@@ -13,6 +13,8 @@ STATUS_CRITICAL=2
 STATUS_UNKNOWN=3
 INTERVAL_WARNING=$((60 * 60 * 2))
 INTERVAL_CRITICAL=$((60 * 60 * 24))
+PUPPET="/usr/bin/puppet"
+COMMAND="cert"
 PARAMS="-la"
 
 # A space separated list of hostnames to ignore. These might for instance be
@@ -48,7 +50,7 @@ NOW=$(date +"%s")
 # Get all hostnames associated with active certificates, and check the time
 # each of these last checked in with the server. Do this by converting the
 # yaml file expiration datestamp to epoch format and subtracting it from now.
-for node in $(/usr/sbin/puppetca ${PARAMS} | awk '/^\+/ {print $2}' | tr -d '"'); do
+for node in $(${PUPPET} ${COMMAND} ${PARAMS} | awk '/^\+/ {print $2}' | tr -d '"'); do
 
   EXPIRATION=$(grep expiration ${YAMLPATH}/$node.yaml | awk '{printf("%s %s", $2, $3);}')
   typeset -i CHECKIN=$(date +"%s" -d "${EXPIRATION}")
