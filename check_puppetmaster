@@ -52,27 +52,29 @@ NOW=$(date +"%s")
 # yaml file expiration datestamp to epoch format and subtracting it from now.
 for node in $(${PUPPET} ${COMMAND} ${PARAMS} | awk '/^\+/ {print $2}' | tr -d '"'); do
 
-  EXPIRATION=$(grep expiration ${YAMLPATH}/$node.yaml | awk '{printf("%s %s", $2, $3);}')
-  typeset -i CHECKIN=$(date +"%s" -d "${EXPIRATION}")
-  DIFFERENCE=$((${NOW} - ${CHECKIN}))
+  if [ -e "${YAMLPATH}/$node.yaml" ]; then
+    EXPIRATION=$(grep -m1 expiration ${YAMLPATH}/$node.yaml | awk '{printf("%s %s", $2, $3);}')
+    typeset -i CHECKIN=$(date +"%s" -d "${EXPIRATION}")
+    DIFFERENCE=$((${NOW} - ${CHECKIN}))
 
-  # Count hosts and generate some output strings based on the status.
-  if [ ${DIFFERENCE} -lt ${INTERVAL_WARNING} ]; then
-    o_count=$((${o_count} + 1));
-  else
-    # If there is an issue, first check if we can ignore this host.
-    if [ -n "${IGNORE_HOSTS}" ]; then
-       if [[ ${IGNORE_HOSTS} =~ ${node} ]]; then
-         i_count=$((${i_count} + 1))
-         continue
-       fi
-    fi
-    if [ ${DIFFERENCE} -gt ${INTERVAL_CRITICAL} ]; then
-      e_count=$((${e_count} + 1))
-      e_string="${e_string} ${node}"
+    # Count hosts and generate some output strings based on the status.
+    if [ ${DIFFERENCE} -lt ${INTERVAL_WARNING} ]; then
+      o_count=$((${o_count} + 1));
     else
-      w_count=$((${w_count} + 1))
-      w_string="${w_string} ${node}"
+      # If there is an issue, first check if we can ignore this host.
+      if [ -n "${IGNORE_HOSTS}" ]; then
+         if [[ ${IGNORE_HOSTS} =~ ${node} ]]; then
+           i_count=$((${i_count} + 1))
+           continue
+         fi
+      fi
+      if [ ${DIFFERENCE} -gt ${INTERVAL_CRITICAL} ]; then
+        e_count=$((${e_count} + 1))
+        e_string="${e_string} ${node}"
+      else
+        w_count=$((${w_count} + 1))
+        w_string="${w_string} ${node}"
+      fi
     fi
   fi
 done
