@@ -17,3 +17,7 @@ IGNORE_HOSTS="my.laptop.local my.tablet.local"
 # you might need to set add "-la --ssldir /var/lib/puppet/ssl" if the
 # `puppetca -la' command provides no output on your puppetmaster.
 PARAMS="-la"
+
+# Do you want to output perfdata about node numbers? Set to yes to enable.
+# Anything else leaves it disabled.
+# PERFDATA=yes

@@ -16,6 +16,7 @@ INTERVAL_CRITICAL=$((60 * 60 * 24))
 PUPPET="/usr/bin/puppet"
 COMMAND="cert"
 PARAMS="-la"
+PERFDATA=no
 
 # A space separated list of hostnames to ignore. These might for instance be
 # laptops that just don't get used every day and thus don't sync.
@@ -41,6 +42,7 @@ w_count=0
 w_string=""
 e_count=0
 e_string=""
+p_string=""
 
 # Current time.
 NOW=$(date +"%s")
@@ -100,6 +102,12 @@ elif [ ${w_count} -gt 0 ]; then
   ret=${STATUS_WARNING}
 fi
 
+# Optionally add perfdata to output.
+if [ "${PERFDATA}" = "yes" ]; then
+  p_string=" | ok=${o_count}, err=${e_count}, warn=${w_count}, ign=${i_count}"
+fi
+
+
 # Output the status and inform the user about which hosts are lagging.
-echo -n "${status}:${s_string}"
+echo -n "${status}:${s_string}${p_string}"
 exit $ret
