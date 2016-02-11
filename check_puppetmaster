@@ -56,7 +56,8 @@ for node in $(${PUPPET} ${COMMAND} ${PARAMS} | awk '/^\+/ {print $2}' | tr -d '"
 
   if [ -e "${YAMLPATH}/$node.yaml" ]; then
     EXPIRATION=$(grep -m1 expiration ${YAMLPATH}/$node.yaml | awk '{printf("%s %s", $2, $3);}')
-    typeset -i CHECKIN=$(date +"%s" -d "${EXPIRATION}")
+    EXPIRATION=$(echo $EXPIRATION | sed "s/'//g")
+    typeset -i CHECKIN=$(date +"%s" -d "${EXPIRATION}" )
     DIFFERENCE=$((${NOW} - ${CHECKIN}))
 
     # Count hosts and generate some output strings based on the status.
@@ -94,7 +95,10 @@ fi
 s_string="${s_string} ${o_count} ok."
 
 # Create a return value and status string.
-if [ ${e_count} -gt 0 ]; then
+if [ ${o_count} -eq 0 ]; then
+  status="CRITICAL"
+  ret=${STATUS_CRITICAL}
+elif [ ${e_count} -gt 0 ]; then
   status="CRITICAL"
   ret=${STATUS_CRITICAL}
 elif [ ${w_count} -gt 0 ]; then
